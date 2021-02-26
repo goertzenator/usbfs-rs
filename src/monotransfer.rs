@@ -12,7 +12,7 @@ use std::slice;
 /// Note there is no immutable version of this struct because setup packet
 /// always needs to be written to the given buffer.
 pub struct ControlTransferMut<B> {
-  urb: Urb,
+  pub urb: Urb,
   setup: Setup<BusEndian>,
   pub buf: B,
 }
@@ -92,7 +92,7 @@ unsafe impl<B: AsMut<[u8]>> Transfer for ControlTransferMut<B> {
 
 /// Bulk Transfer on immutable buffer.  Only OUT transfers permitted.
 pub struct BulkTransfer<B> {
-  urb: Urb,
+  pub urb: Urb,
   pub buf: B,
 }
 impl<B> BulkTransfer<B> {
@@ -119,7 +119,7 @@ unsafe impl<B: AsRef<[u8]>> Transfer for BulkTransfer<B> {
 
 /// Bulk Transfer on mutable buffer.  IN and OUT transfers permitted.
 pub struct BulkTransferMut<B> {
-  urb: Urb,
+  pub urb: Urb,
   pub buf: B,
 }
 impl<B> BulkTransferMut<B> {
@@ -150,7 +150,7 @@ unsafe impl<B: AsMut<[u8]>> Transfer for BulkTransferMut<B> {
 
 /// Interrupt Transfer on immutable buffer.  Only OUT transfers permitted.
 pub struct InterruptTransfer<B> {
-  urb: Urb,
+  pub urb: Urb,
   pub buf: B,
 }
 impl<B> InterruptTransfer<B> {
@@ -177,7 +177,7 @@ unsafe impl<B: AsRef<[u8]>> Transfer for InterruptTransfer<B> {
 
 /// Interrupt Transfer on mutable buffer.  IN and OUT transfers permitted.
 pub struct InterruptTransferMut<B> {
-  urb: Urb,
+  pub urb: Urb,
   pub buf: B,
 }
 impl<B> InterruptTransferMut<B> {
