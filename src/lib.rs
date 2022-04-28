@@ -90,3 +90,9 @@ pub use asyncdevice::*;
 
 mod monotransfer;
 pub use monotransfer::*;
+
+mod stdbuftransfer;
+pub use stdbuftransfer::*;
+
+mod isobuftransfer;
+pub use isobuftransfer::*;

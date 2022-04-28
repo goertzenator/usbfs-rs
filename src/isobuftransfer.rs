@@ -14,25 +14,20 @@ pub trait IsoBuffer: AsMut<[u8]> {
 }
 
 
-
-
-const MAX_ISO_PACKETS: usize = 32;
-
-/// ///////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////
 ///
 /// StdBufTransfer
 ///
 
 #[derive(Debug)]
 #[repr(C)]
-pub struct IsoBufTransfer<B> {
+pub struct IsoBufTransfer<B, const N: usize> {
     urb: Urb,
-    iso_packets: [IsoPacketDesc; MAX_ISO_PACKETS],
+    iso_packets: [IsoPacketDesc; N],
     pub buf: B,
 }
 
-
-unsafe impl<B: IsoBuffer+Debug> Transfer for IsoBufTransfer<B> {
+unsafe impl<B: IsoBuffer+Debug, const N: usize> Transfer for IsoBufTransfer<B, N> {
     fn wire_urb(&mut self) -> &mut Urb {
 
         // Initialize iso packet descriptors.
@@ -66,10 +61,9 @@ unsafe impl<B: IsoBuffer+Debug> Transfer for IsoBufTransfer<B> {
 }
 
 
-impl<B> IsoBufTransfer<B> {
+impl<B,const N: usize> IsoBufTransfer<B,N> {
 
-
-    pub fn isochronous(endpoint: u8, flags: UrbFlags, buf: B) -> IsoBufTransfer<B> {
+    pub fn isochronous(endpoint: u8, flags: UrbFlags, buf: B) -> IsoBufTransfer<B,N> {
         IsoBufTransfer {
             urb: Urb {
                 urbtype: UrbType::Iso as u8,
@@ -77,7 +71,7 @@ impl<B> IsoBufTransfer<B> {
                 flags,
                 ..Urb::default()
             },
-            iso_packets: Default::default(),
+            iso_packets: [IsoPacketDesc::default(); N],
             buf,
         }
     }
@@ -86,51 +80,7 @@ impl<B> IsoBufTransfer<B> {
         &self.urb
     }
 
-    //
     pub fn status(&self) -> &[IsoPacketDesc] {
         &self.iso_packets[..(self.urb.number_of_packets as usize)]
     }
-
-    //    pub fn data(&self) -> &[u8] {
-    //        match self.urb.urbtype {
-    //            urbtype if (UrbType::Control as u8) == urbtype => &self.buf.as_ref()[8..],
-    //            _ => self.buf.as_ref(),
-    //        }
-    //    }
-//
-//    pub fn data_mut(&mut self) -> &mut [u8] {
-//        match self.urb.urbtype {
-//            urbtype if (UrbType::Control as u8) == urbtype => &mut self.buf.as_mut()[8..],
-//            _ => self.buf.as_mut(),
-//        }
-//    }
-
-    //    pub fn result_data(&self) -> nix::Result<&[u8]> {
-    //        let actual_length = try!(self.result_length());
-    //        Ok(&self.data()[0..actual_length])
-    //    }
-
-//    pub fn result_data_mut(&mut self) -> nix::Result<&mut [u8]> {
-//        let actual_length = self.result_length()?;
-//        Ok(&mut self.data_mut()[0..actual_length])
-//    }
-//
-//    pub fn result_length(&self) -> nix::Result<usize> {
-//        let (status, length) = match self.urb.urbtype {
-//            urbtype if (UrbType::Iso as u8) == urbtype => {
-//                (self.iso_packets[0].status, self.iso_packets[0].actual_length)
-//            }
-//            _ => (self.urb.status, self.urb.actual_length),
-//        };
-//        status_to_nixresult(status)?;
-//        Ok(length as usize)
-//    }
 }
-//
-//fn status_to_nixresult(status: i32) -> nix::Result<()> {
-//    if status < 0 {
-//        Err(nix::Error::from_errno(nix::errno::Errno::from_i32(status)))
-//    } else {
-//        Ok(())
-//    }
-//}

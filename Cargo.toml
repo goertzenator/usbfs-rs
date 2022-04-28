@@ -1,6 +1,6 @@
 [package]
 name = "usbfs"
-version = "0.1.1"
+version = "0.1.2"
 authors = ["Daniel Goertzen <daniel.goertzen@gmail.com>"]
 
 [features]
@@ -8,7 +8,6 @@ default = []
 
 [dependencies]
 libc = "0.2"
-nix = "0.13"
-bitflags = "1.0"
-mio = { version = "0.6", optional = true }
-
+nix = "0.24"
+bitflags = "1.3"
+mio = { version = "0.8", optional = true }

@@ -116,8 +116,8 @@ fn my_test() -> io::Result<()> {
     // get the transfers rolling
     for _ in 0..2 {
         let buf: UrbDataFrame = Default::default();
-        let xfer = IsoBufTransfer::isochronous(
-                                 0x81,  // endpoint 
+        let xfer: IsoBufTransfer<UrbDataFrame,32> = IsoBufTransfer::isochronous(
+                                 0x81,  // endpoint
                                  UrbFlags::empty(),  // flags (none)
                                  buf );
 //        println!("{:?}", xfer);
@@ -189,7 +189,7 @@ fn my_test() -> io::Result<()> {
 
 // fn make_transfer() -> StdTransfer<Vec<u8>> {
 //     let mut xfer = StdTransfer::new(UrbType::Bulk, //  UrbType::Interrupt,
-//                                  0x81,  // endpoint 
+//                                  0x81,  // endpoint
 //                                  UrbFlags::empty(),  // flags (none)
 //                                  { let mut v=Vec::new();
 //                                     v.resize(64*10,0);
@@ -220,7 +220,7 @@ fn my_test() -> io::Result<()> {
 //             64,
 //             );
 //     write_setup_struct(&setup.to_bus(), &mut xfer.buf);
-    
+
 //     xfer
 // }
 

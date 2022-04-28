@@ -3,7 +3,6 @@
 use std::{io, fs, fmt};
 use std::os::unix::io::{AsRawFd, RawFd};
 use std::fs::File;
-use std::ffi::OsStr;
 
 
 //use nix;
@@ -54,15 +53,10 @@ impl Device {
     /// }
     /// ```
     pub fn new(device: &DeviceInfo) -> io::Result<Self> {
-        Self::from_busdev(device.busnum()?, device.devnum()?)
+        Self::new_from_busdev(device.busnum()?, device.devnum()?)
     }
 
-    /// Open device from device path.  See [`DeviceInfo::from_devpath`]
-    pub fn from_devpath<P: AsRef<OsStr>>(p: P) -> io::Result<Self> {
-        Self::new(&DeviceInfo::from_devpath(p)?)
-    }
-
-    pub fn from_busdev(busnum: u32, devnum: u32) -> io::Result<Self> {
+    pub fn new_from_busdev(busnum: u32, devnum: u32) -> io::Result<Self> {
         let mut openopts = fs::OpenOptions::new();
         openopts.read(true).write(true);
 

@@ -273,14 +273,7 @@ ioctl_write_ptr_bad!(claiminterface, request_code_read!('U', 15, size_of::<c_uin
 // #define USBDEVFS_DROP_PRIVILEGES   _IOW('U', 30, __u32)
 
 fn nix_err_to_io_err(err: nix::Error) -> io::Error {
-    match err {
-        nix::Error::Sys(err_no) => {
-            io::Error::from(err_no)
-        }
-        _ => {
-            io::Error::new(io::ErrorKind::InvalidData, err)
-        }
-    }
+    io::Error::from(err)
 }
 
 pub fn nix_result_to_io_result<T>(res: nix::Result<T>) -> io::Result<T> {

@@ -168,7 +168,7 @@ impl<B: Buffer> StdBufTransfer<B> {
 
 fn status_to_nixresult(status: i32) -> nix::Result<()> {
     if status < 0 {
-        Err(nix::Error::from_errno(nix::errno::Errno::from_i32(status)))
+        Err(nix::Error::from_i32(status))
     } else {
         Ok(())
     }

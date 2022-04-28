@@ -3,8 +3,6 @@ extern crate usbfs;
 
 use usbfs::*;
 //use mio::*;
-use std::thread::sleep;
-use std::time::Duration;
 use std::io;
 
 
@@ -41,7 +39,7 @@ fn sync_demo() -> io::Result<()> {
                              3, // request (gets HW serial number)
                              0, // value (ignored for this request)
                              0, // index (Watchdog)
-                             &mut unique_id,
+                             Some(&mut unique_id),
                              1000).unwrap();
     print!("HW serial = ");
     printbuf(&unique_id);
@@ -57,7 +55,7 @@ fn sync_demo() -> io::Result<()> {
                              0, // request (STREAM_ON)
                              0, // value (ignored for this request)
                              2, // index (DDC112)
-                             &mut unique_id,
+                             Some(&mut unique_id),
                              1000).unwrap();
 
     // stop streaming
@@ -67,7 +65,7 @@ fn sync_demo() -> io::Result<()> {
                              1, // request (STREAM_OFF)
                              0, // value (ignored for this request)
                              2, // index (DDC112)
-                             &mut unique_id,
+                             Some(&mut unique_id),
                              1000).unwrap();
 
 
@@ -220,7 +218,7 @@ fn is_my_device(di: &DeviceInfo) -> bool {
         _ => false
     }
 }
- 
+
 
 fn printbuf(buf: &[u8]) {
     for &byte in buf.iter() {
