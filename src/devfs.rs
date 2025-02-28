@@ -1,5 +1,5 @@
 use nix;
-pub use nix::libc::{c_int, c_uint};
+pub use nix::libc::c_uint;
 use std::io;
 use std::mem::size_of;
 

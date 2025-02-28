@@ -173,7 +173,7 @@ where
     /// # Examples
     /// The recipe for processing is slightly simpler than for `reap_nowait()`:
     /// ```
-    /// match device.reap_nowait() {
+    /// match device.reap_wait() {
     ///     Ok((_slot, xfer, Ok(actual_length))) => {
     ///         // transfer completed!
     ///         let buf = xfer.result_buf(actual_length);
