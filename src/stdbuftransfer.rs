@@ -1,5 +1,4 @@
-
-use std::{ptr};
+use std::ptr;
 
 //use usbtypes::*;
 //use usbtypes::devfs::*;
@@ -14,9 +13,6 @@ use super::*;
 pub trait Buffer: AsMut<[u8]> {}
 impl<T> Buffer for T where T: AsMut<[u8]> {}
 
-
-
-
 /// ///////////////////////////////////////////////////////////////////////////
 ///
 /// StdBufTransfer
@@ -29,7 +25,6 @@ pub struct StdBufTransfer<B: Buffer> {
     iso_packets: [IsoPacketDesc; 1],
     pub buf: B,
 }
-
 
 unsafe impl<B: Buffer> Transfer for StdBufTransfer<B> {
     fn wire_urb(&mut self) -> &mut Urb {
@@ -52,19 +47,17 @@ unsafe impl<B: Buffer> Transfer for StdBufTransfer<B> {
     }
 }
 
-
 impl<B: Buffer> StdBufTransfer<B> {
-
-    pub fn control(direction: SetupDirection,
-                   stype: SetupType,
-                   recipient: SetupRecipient,
-                   request: u8,
-                   value: u16,
-                   index: u16,
-                   flags: UrbFlags,
-                   buf: B)
-                   -> StdBufTransfer<B> {
-
+    pub fn control(
+        direction: SetupDirection,
+        stype: SetupType,
+        recipient: SetupRecipient,
+        request: u8,
+        value: u16,
+        index: u16,
+        flags: UrbFlags,
+        buf: B,
+    ) -> StdBufTransfer<B> {
         let mut xfer = StdBufTransfer {
             urb: Urb {
                 urbtype: UrbType::Control as u8,
@@ -79,13 +72,15 @@ impl<B: Buffer> StdBufTransfer<B> {
         if xfer.buf.as_mut().len() < 8 {
             panic!("control transfer buffer must be at least 8 bytes");
         }
-        let setup = Setup::new(direction,
-                               stype,
-                               recipient,
-                               request,
-                               value,
-                               index,
-                               (xfer.buf.as_mut().len() - 8) as u16);
+        let setup = Setup::new(
+            direction,
+            stype,
+            recipient,
+            request,
+            value,
+            index,
+            (xfer.buf.as_mut().len() - 8) as u16,
+        );
         write_setup_struct(&setup.into(), xfer.buf.as_mut());
         xfer
     }
@@ -156,9 +151,10 @@ impl<B: Buffer> StdBufTransfer<B> {
 
     pub fn result_length(&self) -> nix::Result<usize> {
         let (status, length) = match self.urb.urbtype {
-            urbtype if (UrbType::Iso as u8) == urbtype => {
-                (self.iso_packets[0].status, self.iso_packets[0].actual_length)
-            }
+            urbtype if (UrbType::Iso as u8) == urbtype => (
+                self.iso_packets[0].status,
+                self.iso_packets[0].actual_length,
+            ),
             _ => (self.urb.status, self.urb.actual_length),
         };
         status_to_nixresult(status)?;
@@ -173,8 +169,6 @@ fn status_to_nixresult(status: i32) -> nix::Result<()> {
         Ok(())
     }
 }
-
-
 
 /// Copy a setup packet into the given buffer.
 ///

@@ -1,8 +1,7 @@
-
-use std::mem::size_of;
-pub use nix::libc::{c_uint, c_int};
-use std::io;
 use nix;
+pub use nix::libc::{c_int, c_uint};
+use std::io;
+use std::mem::size_of;
 
 #[derive(Debug, Copy, Clone)]
 #[repr(C)]
@@ -46,20 +45,20 @@ pub struct Urb {
     pub endpoint: u8,
     pub status: i32, // reap result
     pub flags: UrbFlags,
-    pub buffer: *mut u8, // assigned upon submit
+    pub buffer: *mut u8,    // assigned upon submit
     pub buffer_length: i32, // assigned upon submit
     pub actual_length: i32, // reap result
     pub start_frame: i32,
     pub number_of_packets: i32,
     pub error_count: i32, // reap result
-    pub signr: u32, // signal to be sent on completion, or 0 if none should be sent.
+    pub signr: u32,       // signal to be sent on completion, or 0 if none should be sent.
     pub usercontext: usize, /* assigned upon submit
-                             * struct usbdevfs_iso_packet_desc iso_frame_desc[0];
-                             *
-                             * union {
-                             *  int number_of_packets;  /* Only used for isoc urbs */
-                             *  unsigned int stream_id; /* Only used with bulk streams */
-                             * }; */
+                           * struct usbdevfs_iso_packet_desc iso_frame_desc[0];
+                           *
+                           * union {
+                           *  int number_of_packets;  /* Only used for isoc urbs */
+                           *  unsigned int stream_id; /* Only used with bulk streams */
+                           * }; */
 }
 
 impl Urb {
@@ -151,7 +150,6 @@ pub struct IsoPacketDesc {
     pub status: i32, // kernel header uses unsigned int, but use i32 instead for consistency with urb.
 }
 
-
 impl Default for IsoPacketDesc {
     fn default() -> IsoPacketDesc {
         IsoPacketDesc {
@@ -192,7 +190,6 @@ impl Default for IsoPacketDesc {
 // #define USBDEVFS_CAP_DROP_PRIVILEGES     0x40
 
 // /* USBDEVFS_DISCONNECT_CLAIM flags & struct */
-
 // /* disconnect-and-claim if the driver matches the driver field */
 // #define USBDEVFS_DISCONNECT_CLAIM_IF_DRIVER  0x01
 // /* disconnect-and-claim except when the driver matches the driver field */
@@ -210,11 +207,9 @@ impl Default for IsoPacketDesc {
 //  unsigned char eps[0];
 // };
 
-
 // Sigh, usbfs ioctls have incorrect inversion of read and write.
 // This doesn't matter at all from C, but nix crate applies const/mut to
 // wrappers.
-
 
 // #define USBDEVFS_CONTROL           _IOWR('U', 0, struct usbdevfs_ctrltransfer)
 ioctl_readwrite!(control, b'U', 0, CtrlTransfer);
@@ -225,27 +220,42 @@ ioctl_readwrite!(control, b'U', 0, CtrlTransfer);
 // #define USBDEVFS_RESETEP           _IOR('U', 3, unsigned int)
 
 // #define USBDEVFS_SETINTERFACE      _IOR('U', 4, struct usbdevfs_setinterface)
-ioctl_write_ptr_bad!(setinterface, request_code_read!('U', 4, size_of::<SetInterface>()), SetInterface);
+ioctl_write_ptr_bad!(
+    setinterface,
+    request_code_read!('U', 4, size_of::<SetInterface>()),
+    SetInterface
+);
 
 // #define USBDEVFS_SETCONFIGURATION  _IOR('U', 5, unsigned int)
 // #define USBDEVFS_GETDRIVER         _IOW('U', 8, struct usbdevfs_getdriver)
 
 // #define USBDEVFS_SUBMITURB         _IOR('U', 10, struct usbdevfs_urb)
-ioctl_write_ptr_bad!(submiturb, request_code_read!(b'U', 10, size_of::<Urb>()), Urb);
+ioctl_write_ptr_bad!(
+    submiturb,
+    request_code_read!(b'U', 10, size_of::<Urb>()),
+    Urb
+);
 
 // #define USBDEVFS_SUBMITURB32       _IOR('U', 10, struct usbdevfs_urb32)
 // #define USBDEVFS_DISCARDURB        _IO('U', 11)
 //pub const DISCARDURB_IOCTL: libc::c_ulong = io!(b'U', 11) as libc::c_ulong;
 // ioctl!(none discardurb with b'U', 11; Urb);  // doesn't work due to defective ioctl def (discardurb actually does take a param)
 
-
 // #define USBDEVFS_REAPURB           _IOW('U', 12, void *)
-ioctl_read_bad!(reapurb, request_code_write!(b'U', 12, size_of::<*mut Urb>()), *mut Urb);
+ioctl_read_bad!(
+    reapurb,
+    request_code_write!(b'U', 12, size_of::<*mut Urb>()),
+    *mut Urb
+);
 
 // #define USBDEVFS_REAPURB32         _IOW('U', 12, __u32)
 
 // #define USBDEVFS_REAPURBNDELAY     _IOW('U', 13, void *)
-ioctl_read_bad!(reapurbndelay, request_code_write!(b'U', 13, size_of::<*mut Urb>()), *mut Urb);
+ioctl_read_bad!(
+    reapurbndelay,
+    request_code_write!(b'U', 13, size_of::<*mut Urb>()),
+    *mut Urb
+);
 
 // #define USBDEVFS_REAPURBNDELAY32   _IOW('U', 13, __u32)
 // #define USBDEVFS_DISCSIGNAL        _IOR('U', 14, struct usbdevfs_disconnectsignal)
@@ -253,7 +263,11 @@ ioctl_read_bad!(reapurbndelay, request_code_write!(b'U', 13, size_of::<*mut Urb>
 
 // #define USBDEVFS_CLAIMINTERFACE    _IOR('U', 15, unsigned int)
 //ioctl_write_bad!(claiminterface, request_code_read!('U', 15, sizeof::<c_uint>()), c_uint);
-ioctl_write_ptr_bad!(claiminterface, request_code_read!('U', 15, size_of::<c_uint>()), c_uint);
+ioctl_write_ptr_bad!(
+    claiminterface,
+    request_code_read!('U', 15, size_of::<c_uint>()),
+    c_uint
+);
 
 // #define USBDEVFS_RELEASEINTERFACE  _IOR('U', 16, unsigned int)
 // #define USBDEVFS_CONNECTINFO       _IOW('U', 17, struct usbdevfs_connectinfo)

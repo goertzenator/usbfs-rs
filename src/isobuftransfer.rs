@@ -9,10 +9,9 @@ use std::fmt::Debug;
 
 pub trait IsoBuffer: AsMut<[u8]> {
     fn packet_length(&self) -> usize;
-//    const PACKET_LENGTH: usize; // maximum size of each iso packet
-//    fn packet_lengths(&self) -> impl Iterator<Item=usize>;
+    //    const PACKET_LENGTH: usize; // maximum size of each iso packet
+    //    fn packet_lengths(&self) -> impl Iterator<Item=usize>;
 }
-
 
 //////////////////////////////////////////////////////////////////////////////
 ///
@@ -27,9 +26,8 @@ pub struct IsoBufTransfer<B, const N: usize> {
     pub buf: B,
 }
 
-unsafe impl<B: IsoBuffer+Debug, const N: usize> Transfer for IsoBufTransfer<B, N> {
+unsafe impl<B: IsoBuffer + Debug, const N: usize> Transfer for IsoBufTransfer<B, N> {
     fn wire_urb(&mut self) -> &mut Urb {
-
         // Initialize iso packet descriptors.
         // packet_lengths() indicates the number and length of each packet.
         // The actual number of descriptors initialized is constrained by the following things:
@@ -44,7 +42,9 @@ unsafe impl<B: IsoBuffer+Debug, const N: usize> Transfer for IsoBufTransfer<B, N
         let length = self.buf.packet_length();
 
         for packet in &mut self.iso_packets {
-            if 0==tot_length { break; }
+            if 0 == tot_length {
+                break;
+            }
             let limited_length = std::cmp::min(tot_length, length);
             packet.length = limited_length as i32;
             packet.actual_length = 0;
@@ -60,10 +60,8 @@ unsafe impl<B: IsoBuffer+Debug, const N: usize> Transfer for IsoBufTransfer<B, N
     }
 }
 
-
-impl<B,const N: usize> IsoBufTransfer<B,N> {
-
-    pub fn isochronous(endpoint: u8, flags: UrbFlags, buf: B) -> IsoBufTransfer<B,N> {
+impl<B, const N: usize> IsoBufTransfer<B, N> {
+    pub fn isochronous(endpoint: u8, flags: UrbFlags, buf: B) -> IsoBufTransfer<B, N> {
         IsoBufTransfer {
             urb: Urb {
                 urbtype: UrbType::Iso as u8,

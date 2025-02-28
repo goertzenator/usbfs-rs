@@ -1,14 +1,13 @@
-
-use std::{io, mem};
+use std::ops::DerefMut;
 use std::os::unix::io::{AsRawFd, RawFd};
-use std::ops::{DerefMut};
+use std::{io, mem};
 
 use super::*;
 
-#[cfg(feature="mio")]
-use mio::{Token, PollOpt, Evented};
-#[cfg(feature="mio")]
+#[cfg(feature = "mio")]
 use mio::unix::EventedFd;
+#[cfg(feature = "mio")]
+use mio::{Evented, PollOpt, Token};
 
 /// Low level URB-rendering trait for async transfers.
 ///
@@ -18,7 +17,6 @@ use mio::unix::EventedFd;
 /// configured to read or write to the associated buffer.
 
 pub unsafe trait Transfer {
-
     /// Prepare an URB for submission to usbfs driver.
     fn wire_urb(&mut self) -> &mut Urb;
 }
@@ -60,19 +58,20 @@ pub struct AsyncDevice<R>
 // DerefMut isn't quite what we want because there is no garantee of stable references.
 // Box and &mut do provide this, but it is coincidence.
 // Possible future alternatives are Pin, Anchor, StableDeref.
-
 {
     pub device: Device,
     transfers: Vec<Option<R>>,
 }
-
 
 impl<R> From<Device> for AsyncDevice<R>
 //    where R: DerefMut,
 //          R::Target: Transfer
 {
     fn from(d: Device) -> Self {
-        AsyncDevice{device: d, transfers: Default::default()}
+        AsyncDevice {
+            device: d,
+            transfers: Default::default(),
+        }
     }
 }
 
@@ -87,16 +86,17 @@ impl<R> AsRawFd for AsyncDevice<R>
 
 #[allow(non_snake_case)]
 impl<R> AsyncDevice<R>
-    where R: DerefMut,
-          R::Target: Transfer
+where
+    R: DerefMut,
+    R::Target: Transfer,
 {
-
     /// Create new AsyncDevice given a DeviceInfo struct.
     pub fn new(device: &DeviceInfo) -> io::Result<Self> {
-        Device::new(device)
-            .map(|d| AsyncDevice{device: d, transfers: Default::default() })
+        Device::new(device).map(|d| AsyncDevice {
+            device: d,
+            transfers: Default::default(),
+        })
     }
-
 
     /// Submit a transfer for processing
     ///
@@ -106,8 +106,6 @@ impl<R> AsyncDevice<R>
     /// be used to `discard()` the transfer or identify it when `reap()`ed.  The `Err`
     /// result is a 2-tuple containing the error code and the original transfer.
     pub fn submit_give_back_on_fail(&mut self, mut transfer: R) -> Result<usize, (io::Error, R)> {
-
-
         let urbp: *mut Urb = transfer.wire_urb();
 
         let id = self.insert_transfer(transfer);
@@ -131,9 +129,9 @@ impl<R> AsyncDevice<R>
     ///
     /// Same as `submit_give_back_on_fail()`, but drop transfer upon failure.
     pub fn submit(&mut self, transfer: R) -> io::Result<usize> {
-        self.submit_give_back_on_fail(transfer).map_err(|(err, _)| err)
+        self.submit_give_back_on_fail(transfer)
+            .map_err(|(err, _)| err)
     }
-
 
     /// Collect a previously submitted transfer
     ///
@@ -193,7 +191,6 @@ impl<R> AsyncDevice<R>
         self.reap_main(true)
     }
 
-
     // start abstracting transfer tracking so it can be traitified in the future
 
     fn insert_transfer(&mut self, transfer: R) -> usize {
@@ -230,8 +227,12 @@ impl<R> AsyncDevice<R>
         let mut urbp: *mut Urb = unsafe { mem::MaybeUninit::uninit().assume_init() };
 
         match wait {
-            false => unsafe { devfs::nix_result_to_io_result(devfs::reapurbndelay(self.as_raw_fd(), &mut urbp))? },
-            true => unsafe { devfs::nix_result_to_io_result(devfs::reapurb(self.as_raw_fd(), &mut urbp))? },
+            false => unsafe {
+                devfs::nix_result_to_io_result(devfs::reapurbndelay(self.as_raw_fd(), &mut urbp))?
+            },
+            true => unsafe {
+                devfs::nix_result_to_io_result(devfs::reapurb(self.as_raw_fd(), &mut urbp))?
+            },
         };
 
         // get enclosing Transfer
@@ -242,7 +243,6 @@ impl<R> AsyncDevice<R>
     // /// Abort an in-flight transfer by slot number.
     // /// The `Ok` result is the aborted transfer.  This operation will
     // /// fail if the transfer has already been queued for `reap()`ing.
-
 
     // FIXME: can't get address of URB from current Transfer impl or from get_transfer(). Something has to bend...
 
@@ -270,30 +270,35 @@ impl<R> AsyncDevice<R>
 /// `mio` feature at the crate level.  This feature is enabled by default.
 ///
 /// `Device`s become `Writeable` when `Transfer`s are available to be `reap()`ed.
-#[cfg(feature="mio")]
+#[cfg(feature = "mio")]
 impl<R> Evented for AsyncDevice<R>
-    where R: DerefMut,
-          R::Target: Transfer
+where
+    R: DerefMut,
+    R::Target: Transfer,
 {
-    fn register(&self,
-                selector: &mut Selector,
-                token: Token,
-                interest: EventSet,
-                opts: PollOpt)
-                -> io::Result<()> {
-        println!("register {:?} {:?} {:?}",
-                 EventedFd(&self.as_raw_fd()),
-                 interest,
-                 opts);
+    fn register(
+        &self,
+        selector: &mut Selector,
+        token: Token,
+        interest: EventSet,
+        opts: PollOpt,
+    ) -> io::Result<()> {
+        println!(
+            "register {:?} {:?} {:?}",
+            EventedFd(&self.as_raw_fd()),
+            interest,
+            opts
+        );
         EventedFd(&self.as_raw_fd()).register(selector, token, interest, opts)
     }
 
-    fn reregister(&self,
-                  selector: &mut Selector,
-                  token: Token,
-                  interest: EventSet,
-                  opts: PollOpt)
-                  -> io::Result<()> {
+    fn reregister(
+        &self,
+        selector: &mut Selector,
+        token: Token,
+        interest: EventSet,
+        opts: PollOpt,
+    ) -> io::Result<()> {
         println!("reregister");
         EventedFd(&self.as_raw_fd()).reregister(selector, token, interest, opts)
     }

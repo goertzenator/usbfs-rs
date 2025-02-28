@@ -1,9 +1,6 @@
-
-
-use std::{io, fs, fmt};
-use std::os::unix::io::{AsRawFd, RawFd};
 use std::fs::File;
-
+use std::os::unix::io::{AsRawFd, RawFd};
+use std::{fmt, fs, io};
 
 //use nix;
 //
@@ -12,7 +9,6 @@ use std::fs::File;
 //use deviceinfo::*;
 
 use super::*;
-
 
 /// Perform synchronous USB operations
 ///
@@ -25,7 +21,6 @@ impl AsRawFd for Device {
         self.0.as_raw_fd()
     }
 }
-
 
 impl Device {
     /// Create new Device given a DeviceInfo struct.
@@ -61,10 +56,24 @@ impl Device {
         openopts.read(true).write(true);
 
         // pick first available path for device
-        openopts.open(fmt::format(format_args!("/dev/bus/usb/{:03}/{:03}", busnum, devnum)))
-            .or_else(|_|openopts.open(fmt::format(format_args!("/dev/usbdev{}.{}", busnum, devnum))))
-            .or_else(|_|openopts.open(fmt::format(format_args!("/proc/bus/usb/{:03}/{:03}", busnum, devnum))))
-        .map(|f| Device(f))
+        openopts
+            .open(fmt::format(format_args!(
+                "/dev/bus/usb/{:03}/{:03}",
+                busnum, devnum
+            )))
+            .or_else(|_| {
+                openopts.open(fmt::format(format_args!(
+                    "/dev/usbdev{}.{}",
+                    busnum, devnum
+                )))
+            })
+            .or_else(|_| {
+                openopts.open(fmt::format(format_args!(
+                    "/proc/bus/usb/{:03}/{:03}",
+                    busnum, devnum
+                )))
+            })
+            .map(|f| Device(f))
     }
 
     /// Perform a single synchronous control transfer.  Do not write a Setup packet to
@@ -72,22 +81,21 @@ impl Device {
     /// no exchange beyond the Setup packet is needed.
     ///
     /// The number of bytes transferred to/from `data` is returned as the `Ok` result.
-    pub fn control_transfer(&self,
-                            setupdirection: SetupDirection,
-                            setuptype: SetupType,
-                            setuprecipient: SetupRecipient,
-                            bRequest: u8,
-                            wValue: u16,
-                            wIndex: u16,
-                            odata: Option<&mut [u8]>,
-                            timeout_ms: u32)
-                            -> io::Result<i32> {
-
+    pub fn control_transfer(
+        &self,
+        setupdirection: SetupDirection,
+        setuptype: SetupType,
+        setuprecipient: SetupRecipient,
+        bRequest: u8,
+        wValue: u16,
+        wIndex: u16,
+        odata: Option<&mut [u8]>,
+        timeout_ms: u32,
+    ) -> io::Result<i32> {
         let (data, wLength) = match odata {
             Some(mref) => (mref.as_mut_ptr(), mref.len() as u16),
             None => (std::ptr::null_mut(), 0),
         };
-
 
         let mut xfer = devfs::CtrlTransfer {
             bmRequestType: (setupdirection as u8) | (setuptype as u8) | (setuprecipient as u8),
@@ -102,23 +110,25 @@ impl Device {
         unsafe { devfs::nix_result_to_io_result(devfs::control(self.as_raw_fd(), &mut xfer)) }
     }
 
-    pub fn control_transfer_in(&self,
-                            setuptype: SetupType,
-                            setuprecipient: SetupRecipient,
-                            bRequest: u8,
-                            wValue: u16,
-                            wIndex: u16,
-                            odata: Option<&mut [u8]>,
-                            timeout_ms: u32)
-                            -> io::Result<i32> {
-
+    pub fn control_transfer_in(
+        &self,
+        setuptype: SetupType,
+        setuprecipient: SetupRecipient,
+        bRequest: u8,
+        wValue: u16,
+        wIndex: u16,
+        odata: Option<&mut [u8]>,
+        timeout_ms: u32,
+    ) -> io::Result<i32> {
         let (data, wLength) = match odata {
             Some(mref) => (mref.as_mut_ptr(), mref.len() as u16),
             None => (std::ptr::null_mut(), 0),
         };
 
         let mut xfer = devfs::CtrlTransfer {
-            bmRequestType: (SetupDirection::DeviceToHost as u8) | (setuptype as u8) | (setuprecipient as u8),
+            bmRequestType: (SetupDirection::DeviceToHost as u8)
+                | (setuptype as u8)
+                | (setuprecipient as u8),
             bRequest,
             wValue,
             wIndex,
@@ -130,24 +140,25 @@ impl Device {
         unsafe { devfs::nix_result_to_io_result(devfs::control(self.as_raw_fd(), &mut xfer)) }
     }
 
-    pub fn control_transfer_out(&self,
-                            setuptype: SetupType,
-                            setuprecipient: SetupRecipient,
-                            bRequest: u8,
-                            wValue: u16,
-                            wIndex: u16,
-                            odata: Option<& [u8]>,
-                            timeout_ms: u32)
-                            -> io::Result<i32> {
-
+    pub fn control_transfer_out(
+        &self,
+        setuptype: SetupType,
+        setuprecipient: SetupRecipient,
+        bRequest: u8,
+        wValue: u16,
+        wIndex: u16,
+        odata: Option<&[u8]>,
+        timeout_ms: u32,
+    ) -> io::Result<i32> {
         let (data, wLength) = match odata {
             Some(mref) => (mref.as_ptr(), mref.len() as u16),
             None => (std::ptr::null(), 0),
         };
 
-
         let mut xfer = devfs::CtrlTransfer {
-            bmRequestType: (SetupDirection::HostToDevice as u8) | (setuptype as u8) | (setuprecipient as u8),
+            bmRequestType: (SetupDirection::HostToDevice as u8)
+                | (setuptype as u8)
+                | (setuprecipient as u8),
             bRequest,
             wValue,
             wIndex,
@@ -159,20 +170,20 @@ impl Device {
         unsafe { devfs::nix_result_to_io_result(devfs::control(self.as_raw_fd(), &mut xfer)) }
     }
 
-
-
     pub fn claim_interface(&self, interface: u16) -> io::Result<()> {
         let i: devfs::c_uint = interface as devfs::c_uint;
-        unsafe { devfs::nix_result_to_io_result(devfs::claiminterface(self.as_raw_fd(), &i).map(|_|())) }
+        unsafe {
+            devfs::nix_result_to_io_result(devfs::claiminterface(self.as_raw_fd(), &i).map(|_| ()))
+        }
     }
 
     pub fn set_interface(&self, interface: u32, altsetting: u32) -> io::Result<()> {
         unsafe {
-            let data = devfs::SetInterface{
+            let data = devfs::SetInterface {
                 interface: interface as devfs::c_uint,
                 altsetting: altsetting as devfs::c_uint,
             };
-            devfs::nix_result_to_io_result(devfs::setinterface(self.as_raw_fd(), &data)).map(|_|())
+            devfs::nix_result_to_io_result(devfs::setinterface(self.as_raw_fd(), &data)).map(|_| ())
         }
     }
 }

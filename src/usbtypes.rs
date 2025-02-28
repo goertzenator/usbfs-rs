@@ -1,6 +1,4 @@
-
-use::std::{marker};
-
+use std::marker;
 
 /// Marker type for dual-endian structs.
 ///
@@ -8,17 +6,14 @@ use::std::{marker};
 #[derive(Debug, Copy, Clone)]
 pub struct BusEndian;
 
-
 /// Marker type for dual-endian structs.
 ///
 /// Indicates endian used on the host (big or little endian depending on platform.)
 #[derive(Debug, Copy, Clone)]
 pub struct NativeEndian;
 
-
 // Maybe something better can be done with endianness and serde, such as:
 // Treat BusEndian as byte array and have C struct endian decoder/encoder.
-
 
 /// // usb_types
 
@@ -26,15 +21,15 @@ pub struct NativeEndian;
 #[derive(Debug, Copy, Clone)]
 pub enum SetupDirection {
     HostToDevice = 0,
-    DeviceToHost = 1<<7,
+    DeviceToHost = 1 << 7,
 }
 
 /// Control request type, part of Setup::bmRequestType.
 #[derive(Debug, Copy, Clone)]
 pub enum SetupType {
-    Standard = 0<<5,
-    Class = 1<<5,
-    Vendor = 2<<5,
+    Standard = 0 << 5,
+    Class = 1 << 5,
+    Vendor = 2 << 5,
 }
 
 /// Control request recipient, part of Setup::bmRequestType.
@@ -62,14 +57,15 @@ impl Setup<NativeEndian> {
     /// Construct a native-endian Setup packet.
     ///
     /// `setupdirection`, `setuptype`, and `setuprecipient` are combined to form `bmRequestType`.
-    pub fn new(setupdirection: SetupDirection,
-               setuptype: SetupType,
-               setuprecipient: SetupRecipient,
-               request: u8,
-               value: u16,
-               index: u16,
-               length: u16)
-               -> Setup<NativeEndian> {
+    pub fn new(
+        setupdirection: SetupDirection,
+        setuptype: SetupType,
+        setuprecipient: SetupRecipient,
+        request: u8,
+        value: u16,
+        index: u16,
+        length: u16,
+    ) -> Setup<NativeEndian> {
         Setup {
             bmRequestType: (setupdirection as u8) | (setuptype as u8) | (setuprecipient as u8),
             bRequest: request,
@@ -93,7 +89,6 @@ impl From<Setup<NativeEndian>> for Setup<BusEndian> {
         }
     }
 }
-
 
 /// USB [Device Descriptor](http://www.beyondlogic.org/usbnutshell/usb5.shtml)
 /// used for examining USB devices attached to the host.
@@ -140,4 +135,3 @@ impl From<DeviceDescriptor<BusEndian>> for DeviceDescriptor<NativeEndian> {
 }
 
 // Definitions corresponding to https://github.com/torvalds/linux/blob/master/include/uapi/linux/usbdevice_fs.h
-

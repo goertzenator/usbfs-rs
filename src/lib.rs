@@ -56,7 +56,6 @@
 //! }
 //! ```
 
-
 #![allow(non_snake_case)]
 
 extern crate libc;
@@ -67,17 +66,17 @@ extern crate nix;
 #[macro_use]
 extern crate bitflags;
 
-#[cfg(feature="mio")]
+#[cfg(feature = "mio")]
 extern crate mio;
 
 mod usbtypes;
 pub use usbtypes::*;
 
 mod devfs;
-pub use devfs::{UrbType, UrbFlags};
+pub use devfs::{UrbFlags, UrbType};
 //pub use devfs::UrbFlags; //::{URB_SHORT_NOT_OK, URB_ISO_ASAP, URB_BULK_CONTINUATION, URB_NO_FSBR,
-                //URB_ZERO_PACKET, URB_NO_INTERRUPT};
-pub use devfs::{Urb, IsoPacketDesc};
+//URB_ZERO_PACKET, URB_NO_INTERRUPT};
+pub use devfs::{IsoPacketDesc, Urb};
 
 mod deviceinfo;
 pub use deviceinfo::*;
