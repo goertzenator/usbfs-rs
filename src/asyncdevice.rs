@@ -1,8 +1,8 @@
+use super::*;
+use std::io;
 use std::ops::DerefMut;
 use std::os::unix::io::{AsRawFd, RawFd};
-use std::{io, mem};
-
-use super::*;
+use std::ptr;
 
 #[cfg(feature = "mio")]
 use mio::unix::EventedFd;
@@ -224,7 +224,7 @@ where
 
     fn reap_main(&mut self, wait: bool) -> io::Result<R> {
         // get urb pointer
-        let mut urbp: *mut Urb = unsafe { mem::MaybeUninit::uninit().assume_init() };
+        let mut urbp: *mut Urb = ptr::null_mut();
 
         match wait {
             false => unsafe {

@@ -1,11 +1,9 @@
+use super::*;
 use std;
+use std::default::Default;
+use std::ffi::OsString;
 use std::io::Read;
 use std::{fmt, fs, io, mem, slice};
-//use std::vec::Vec;
-use std::ffi::OsString;
-
-//use super::usbtypes::*;
-use super::*;
 
 const SYSFS_DEVICE_PATH: &'static str = "/sys/bus/usb/devices";
 
@@ -21,8 +19,7 @@ pub struct DeviceInfo {
 impl DeviceInfo {
     /// Something about device_descriptor.
     pub fn device_descriptor(&self) -> io::Result<DeviceDescriptor<NativeEndian>> {
-        let mut descr: DeviceDescriptor<BusEndian> =
-            unsafe { mem::MaybeUninit::uninit().assume_init() };
+        let mut descr = DeviceDescriptor::<BusEndian>::default();
         let filename = fmt::format(format_args!(
             "{}/{}/descriptors",
             SYSFS_DEVICE_PATH,

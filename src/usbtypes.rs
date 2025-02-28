@@ -112,6 +112,28 @@ pub struct DeviceDescriptor<E> {
     endian: marker::PhantomData<E>,
 }
 
+impl<E> Default for DeviceDescriptor<E> {
+    fn default() -> Self {
+        DeviceDescriptor {
+            bLength: 0,
+            bDescriptorType: 0,
+            bcdUSB: 0,
+            bDeviceClass: 0,
+            bDeviceSubClass: 0,
+            bDeviceProtocol: 0,
+            bMaxPacketSize0: 0,
+            idVendor: 0,
+            idProduct: 0,
+            bcdDevice: 0,
+            iManufacturer: 0,
+            iProduct: 0,
+            iSerialNumber: 0,
+            bNumConfigurations: 0,
+            endian: marker::PhantomData,
+        }
+    }
+}
+
 impl From<DeviceDescriptor<BusEndian>> for DeviceDescriptor<NativeEndian> {
     fn from(f: DeviceDescriptor<BusEndian>) -> DeviceDescriptor<NativeEndian> {
         DeviceDescriptor {
